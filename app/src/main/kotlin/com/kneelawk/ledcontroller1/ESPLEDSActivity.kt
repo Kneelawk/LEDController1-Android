@@ -52,8 +52,8 @@ fun ESPControlView(esp: ESPLEDS) {
     refreshing = true
 
     var brightness by remember { mutableStateOf(0) }
-    val brightnessDenoiser = remember {
-        Denoiser<Int>(scope, Dispatchers.IO) {
+    val brightnessConflator = remember {
+        Conflator<Int>(scope, Dispatchers.IO) {
             val res = esp.putBrightness(it)
             if (res.isFailure) {
                 Log.w(
@@ -121,7 +121,7 @@ fun ESPControlView(esp: ESPLEDS) {
                 value = brightness.toFloat(),
                 onValueChange = {
                     brightness = it.toInt()
-                    brightnessDenoiser.send(brightness)
+                    brightnessConflator.send(brightness)
                 },
                 valueRange = 0F..255F,
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp),
