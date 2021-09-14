@@ -12,39 +12,35 @@ import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.kneelawk.ledcontroller1.ui.theme.LEDController1Theme
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MainActivity : AppCompatActivity() {
-    private val scope = MainScope()
-    private val monitor = ESPLEDSMonitor(scope)
-    private var listening = true
-    private lateinit var espList: SnapshotStateList<ESPLEDS>
+    private val monitor = ESPLEDSMonitor(lifecycleScope)
+    private val listening = AtomicBoolean(true)
+    private val espList = mutableStateListOf<ESPLEDS>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             LEDController1Theme {
-                espList = remember { mutableStateListOf() }
                 MainView(espList)
             }
         }
 
-        scope.launch {
-            while (listening) {
+        lifecycleScope.launch {
+            while (listening.get()) {
                 monitor.collectESPs(espList)
 
                 delay(1000)
@@ -54,9 +50,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        listening = false
+        listening.set(false)
         monitor.destroy()
-        scope.cancel()
     }
 }
 
@@ -79,7 +74,7 @@ fun ESPView(esp: ESPLEDS) {
         context.startActivity(intent)
     }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape) {
         Row(
-            modifier = Modifier.padding(all = 8.dp) then Modifier.fillMaxWidth(),
+            modifier = Modifier.padding(all = 8.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (esp.name.isBlank()) {
@@ -101,6 +96,19 @@ fun ESPView(esp: ESPLEDS) {
                 )
             }
         }
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun PreviewMainView() {
+    LEDController1Theme {
+        MainView(
+            espList = listOf(
+                ESPLEDS("192.168.1.6", "Name Here", Instant.now()),
+                ESPLEDS("192.168.1.254", "", Instant.now())
+            )
+        )
     }
 }
 

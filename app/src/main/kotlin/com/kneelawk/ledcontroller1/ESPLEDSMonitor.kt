@@ -9,6 +9,7 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ESPLEDSMonitor(scope: CoroutineScope) {
     companion object {
@@ -19,7 +20,7 @@ class ESPLEDSMonitor(scope: CoroutineScope) {
         private val UDP_PREFIX_BYTES = UDP_PREFIX.toByteArray()
     }
 
-    private var listening = true
+    private val listening = AtomicBoolean(true)
     private var esps = hashMapOf<String, ESPLEDS>()
     private val espsLock = Mutex()
 
@@ -27,7 +28,7 @@ class ESPLEDSMonitor(scope: CoroutineScope) {
         scope.launch(Dispatchers.IO) {
             val socket = DatagramSocket(12888, InetAddress.getByName("0.0.0.0"))
             val data = ByteArray(512)
-            while (listening) {
+            while (listening.get()) {
                 val packet = DatagramPacket(data, data.size)
                 socket.receive(packet)
 
@@ -57,7 +58,7 @@ class ESPLEDSMonitor(scope: CoroutineScope) {
             socket.disconnect()
         }
         scope.launch {
-            while (listening) {
+            while (listening.get()) {
                 val now = Instant.now()
                 espsLock.withLock {
                     esps.values.removeIf { Duration.between(it.lastUpdate, now) > MAX_ESP_AGE }
@@ -76,6 +77,6 @@ class ESPLEDSMonitor(scope: CoroutineScope) {
     }
 
     fun destroy() {
-        listening = false
+        listening.set(false)
     }
 }
