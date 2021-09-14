@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">LED Controller 1</string>
+    <string name="title_activity_espledsactivity">ESPLEDSActivity</string>
+</resources>
