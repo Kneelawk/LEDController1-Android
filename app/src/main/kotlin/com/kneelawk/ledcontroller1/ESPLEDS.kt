@@ -26,13 +26,15 @@ class ESPLEDS(val ip: String, val name: String, val lastUpdate: Instant) : Parce
         parcel.writeLong(lastUpdate.epochSecond)
     }
 
-    suspend fun getBrightness(): Result<Int> {
+    private suspend fun <T> get(path: String, fromString: (String) -> T): Result<T> {
         return withContext(Dispatchers.IO) {
             try {
                 Result.success(
-                    String(
-                        URL("http://$ip/brightness").openStream().readBytes()
-                    ).trim().toInt()
+                    fromString(
+                        String(
+                            URL("http://$ip/$path").openStream().readBytes()
+                        ).trim()
+                    )
                 )
             } catch (e: IOException) {
                 Result.failure(e)
@@ -42,17 +44,22 @@ class ESPLEDS(val ip: String, val name: String, val lastUpdate: Instant) : Parce
         }
     }
 
-    suspend fun putBrightness(newBrightness: Int): Result<Int> {
+    private suspend fun <T> put(
+        path: String,
+        value: T,
+        toString: (T) -> String,
+        fromString: (String) -> T
+    ): Result<T> {
         return withContext(Dispatchers.IO) {
             try {
-                (URL("http://$ip/brightness").openConnection() as? HttpURLConnection)?.run {
+                (URL("http://$ip/$path").openConnection() as? HttpURLConnection)?.run {
                     requestMethod = "PUT"
                     doOutput = true
                     setRequestProperty("Content-Type", "text/plain")
                     setRequestProperty("Accept", "text/plain")
 
-                    outputStream.write("$newBrightness".toByteArray())
-                    Result.success(String(inputStream.readBytes()).trim().toInt())
+                    outputStream.write(toString(value).toByteArray())
+                    Result.success(fromString(String(inputStream.readBytes()).trim()))
                 } ?: Result.failure(IOException("Unable to open connection"))
             } catch (e: IOException) {
                 Result.failure(e)
@@ -60,6 +67,38 @@ class ESPLEDS(val ip: String, val name: String, val lastUpdate: Instant) : Parce
                 Result.failure(e)
             }
         }
+    }
+
+    suspend fun getBrightness(): Result<Int> {
+        return get("brightness", String::toInt)
+    }
+
+    suspend fun putBrightness(newBrightness: Int): Result<Int> {
+        return put("brightness", newBrightness, Int::toString, String::toInt)
+    }
+
+    suspend fun getFrameDuration(): Result<Int> {
+        return get("frame-duration", String::toInt)
+    }
+
+    suspend fun putFrameDuration(newFrameDuration: Int): Result<Int> {
+        return put("frame-duration", newFrameDuration, Int::toString, String::toInt)
+    }
+
+    suspend fun getHuePerPixel(): Result<Int> {
+        return get("hue-per-pixel", String::toInt)
+    }
+
+    suspend fun putHuePerPixel(newHuePerPixel: Int): Result<Int> {
+        return put("hue-per-pixel", newHuePerPixel, Int::toString, String::toInt)
+    }
+
+    suspend fun getHuePerFrame(): Result<Int> {
+        return get("hue-per-frame", String::toInt)
+    }
+
+    suspend fun putHuePerFrame(newHuePerFrame: Int): Result<Int> {
+        return put("hue-per-frame", newHuePerFrame, Int::toString, String::toInt)
     }
 
     companion object CREATOR : Parcelable.Creator<ESPLEDS> {

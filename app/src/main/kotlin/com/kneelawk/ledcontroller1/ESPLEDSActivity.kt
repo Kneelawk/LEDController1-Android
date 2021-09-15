@@ -21,6 +21,8 @@ import java.time.Instant
 
 const val ESPLEDS_MESSAGE = "com.kneelawk.ledcontroller1.ESPLEDS_MESSAGE"
 
+private const val ESPLEDSA_TAG = "ESPLEDSActivity"
+
 class ESPLEDSActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,10 +58,17 @@ fun ESPControlView(esp: ESPLEDS) {
         Conflator<Int>(scope, Dispatchers.IO) {
             val res = esp.putBrightness(it)
             if (res.isFailure) {
-                Log.w(
-                    "ESPLEDSActivity",
-                    "Error setting brightness: ${res.exceptionOrNull()}"
-                )
+                Log.w(ESPLEDSA_TAG, "Error setting brightness: ${res.exceptionOrNull()}")
+            }
+        }
+    }
+
+    var frameDuration by remember { mutableStateOf(5) }
+    val frameDurationConflator = remember {
+        Conflator<Int>(scope, Dispatchers.IO) {
+            val res = esp.putFrameDuration(it)
+            if (res.isFailure) {
+                Log.w(ESPLEDSA_TAG, "Error setting frame duration: ${res.exceptionOrNull()}")
             }
         }
     }
@@ -67,6 +76,7 @@ fun ESPControlView(esp: ESPLEDS) {
     suspend fun refresh() {
         refreshing = true
         brightness = esp.getBrightness().getOrDefault(0)
+        frameDuration = esp.getFrameDuration().getOrDefault(5)
         refreshing = false
     }
 
@@ -139,6 +149,29 @@ fun ESPControlView(esp: ESPLEDS) {
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                 )
             }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colors.primaryVariant,
+                elevation = 2.dp
+            ) {
+                Text(
+                    text = "Frame Duration",
+                    style = MaterialTheme.typography.subtitle1,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
+
+            Spinner(
+                value = frameDuration,
+                onValueChange = {
+                    frameDuration = it
+                    frameDurationConflator.send(frameDuration)
+                },
+                minValue = 5,
+                maxValue = 1000,
+                enabled = !refreshing
+            )
         }
     }
 
