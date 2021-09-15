@@ -73,10 +73,38 @@ fun ESPControlView(esp: ESPLEDS) {
         }
     }
 
+    var huePerFrame by remember { mutableStateOf(1) }
+    val huePerFrameConflator = remember {
+        Conflator<Int>(scope, Dispatchers.IO) {
+            val res = esp.putHuePerFrame(it)
+            if (res.isFailure) {
+                Log.w(ESPLEDSA_TAG, "Error setting hue per frame: ${res.exceptionOrNull()}")
+            }
+        }
+    }
+
+    var huePerPixel by remember { mutableStateOf(3) }
+    val huePerPixelConflator = remember {
+        Conflator<Int>(scope, Dispatchers.IO) {
+            val res = esp.putHuePerPixel(it)
+            if (res.isFailure) {
+                Log.w(ESPLEDSA_TAG, "Error setting hue per pixel: ${res.exceptionOrNull()}")
+            }
+        }
+    }
+
     suspend fun refresh() {
         refreshing = true
-        brightness = esp.getBrightness().getOrDefault(0)
-        frameDuration = esp.getFrameDuration().getOrDefault(5)
+        brightness = esp.getBrightness()
+            .getOrDefaultElse(0) { Log.w(ESPLEDSA_TAG, "Error getting brightness: $it") }
+        frameDuration = esp.getFrameDuration()
+            .getOrDefaultElse(5) { Log.w(ESPLEDSA_TAG, "Error getting frame duration: $it") }
+        huePerFrame = esp.getHuePerFrame()
+            .getOrDefaultElse(1) { Log.w(ESPLEDSA_TAG, "Error getting hue per frame: $it") }
+            .toByte().toInt()
+        huePerPixel = esp.getHuePerPixel()
+            .getOrDefaultElse(3) { Log.w(ESPLEDSA_TAG, "Error getting hue per pixel: $it") }
+            .toByte().toInt()
         refreshing = false
     }
 
@@ -115,17 +143,7 @@ fun ESPControlView(esp: ESPLEDS) {
         }
     }) {
         Column {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colors.primaryVariant,
-                elevation = 2.dp
-            ) {
-                Text(
-                    text = "Brightness",
-                    style = MaterialTheme.typography.subtitle1,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                )
-            }
+            SectionHeader(title = "Brightness")
 
             Slider(
                 value = brightness.toFloat(),
@@ -150,17 +168,7 @@ fun ESPControlView(esp: ESPLEDS) {
                 )
             }
 
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colors.primaryVariant,
-                elevation = 2.dp
-            ) {
-                Text(
-                    text = "Frame Duration",
-                    style = MaterialTheme.typography.subtitle1,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                )
-            }
+            SectionHeader(title = "Frame Duration")
 
             Spinner(
                 value = frameDuration,
@@ -172,12 +180,53 @@ fun ESPControlView(esp: ESPLEDS) {
                 maxValue = 1000,
                 enabled = !refreshing
             )
+
+            SectionHeader(title = "Hue Per Frame")
+
+            Spinner(
+                value = huePerFrame,
+                onValueChange = {
+                    huePerFrame = it
+                    huePerFrameConflator.send(huePerFrame)
+                },
+                minValue = -128,
+                maxValue = 127,
+                enabled = !refreshing
+            )
+
+            SectionHeader(title = "Hue Per Pixel")
+
+            Spinner(
+                value = huePerPixel,
+                onValueChange = {
+                    huePerPixel = it
+                    huePerPixelConflator.send(huePerPixel)
+                },
+                minValue = -128,
+                maxValue = 127,
+                enabled = !refreshing
+            )
         }
     }
 
     LaunchedEffect(key1 = esp, block = {
         refresh()
     })
+}
+
+@Composable
+fun SectionHeader(title: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colors.primaryVariant,
+        elevation = 2.dp
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.subtitle1,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
+    }
 }
 
 @Preview(showBackground = true)
