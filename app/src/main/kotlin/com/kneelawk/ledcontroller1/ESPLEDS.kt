@@ -9,7 +9,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
 
-class ESPLEDS(val ip: String, val name: String, val lastUpdate: Instant) : Parcelable {
+class ESPLEDS(val ip: String, val initialName: String, val lastUpdate: Instant) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
         parcel.readString()!!,
@@ -22,11 +22,14 @@ class ESPLEDS(val ip: String, val name: String, val lastUpdate: Instant) : Parce
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(ip)
-        parcel.writeString(name)
+        parcel.writeString(initialName)
         parcel.writeLong(lastUpdate.epochSecond)
     }
 
-    private suspend fun <T> get(path: String, fromString: (String) -> T): Result<T> {
+    private suspend inline fun <T> get(
+        path: String,
+        crossinline fromString: (String) -> T
+    ): Result<T> {
         return withContext(Dispatchers.IO) {
             try {
                 Result.success(
@@ -44,11 +47,11 @@ class ESPLEDS(val ip: String, val name: String, val lastUpdate: Instant) : Parce
         }
     }
 
-    private suspend fun <T> put(
+    private suspend inline fun <T> put(
         path: String,
         value: T,
-        toString: (T) -> String,
-        fromString: (String) -> T
+        crossinline toString: (T) -> String,
+        crossinline fromString: (String) -> T
     ): Result<T> {
         return withContext(Dispatchers.IO) {
             try {
@@ -99,6 +102,14 @@ class ESPLEDS(val ip: String, val name: String, val lastUpdate: Instant) : Parce
 
     suspend fun putHuePerFrame(newHuePerFrame: Int): Result<Int> {
         return put("hue-per-frame", newHuePerFrame, Int::toString, String::toInt)
+    }
+
+    suspend fun getName(): Result<String> {
+        return get("name", String::toString)
+    }
+
+    suspend fun putName(newName: String): Result<String> {
+        return put("name", newName, String::toString, String::toString)
     }
 
     companion object CREATOR : Parcelable.Creator<ESPLEDS> {

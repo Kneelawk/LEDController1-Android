@@ -6,14 +6,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.FirstBaseline
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.kneelawk.ledcontroller1.ui.theme.LEDController1Theme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,6 +27,7 @@ import java.time.Instant
 const val ESPLEDS_MESSAGE = "com.kneelawk.ledcontroller1.ESPLEDS_MESSAGE"
 
 private const val ESPLEDSA_TAG = "ESPLEDSActivity"
+private const val ESPLEDS_MAX_NAME_LENGTH = 32
 
 class ESPLEDSActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +57,16 @@ fun ESPControlView(esp: ESPLEDS) {
     val scope = rememberCoroutineScope()
 
     var refreshing by remember { mutableStateOf(true) }
-    refreshing = true
+
+    var renaming by remember { mutableStateOf(false) }
+    var espName by remember { mutableStateOf(esp.initialName) }
+    val espNameConflator = remember {
+        Conflator<String>(scope, Dispatchers.IO) { newName ->
+            espName = esp.putName(newName).getOrDefaultElse("") {
+                Log.w(ESPLEDSA_TAG, "Error setting name: $it")
+            }
+        }
+    }
 
     var brightness by remember { mutableStateOf(0) }
     val brightnessConflator = remember {
@@ -95,6 +110,8 @@ fun ESPControlView(esp: ESPLEDS) {
 
     suspend fun refresh() {
         refreshing = true
+        espName = esp.getName()
+            .getOrDefaultElse("") { Log.w(ESPLEDSA_TAG, "Error getting name: $it") }
         brightness = esp.getBrightness()
             .getOrDefaultElse(0) { Log.w(ESPLEDSA_TAG, "Error getting brightness: $it") }
         frameDuration = esp.getFrameDuration()
@@ -108,19 +125,41 @@ fun ESPControlView(esp: ESPLEDS) {
         refreshing = false
     }
 
+    if (renaming) {
+        Dialog(onDismissRequest = { renaming = false }) {
+            RenameDialog(
+                name = espName,
+                newName = {
+                    espNameConflator.send(it)
+                    renaming = false
+                },
+                cancel = { renaming = false }
+            )
+        }
+    }
+
     Scaffold(topBar = {
         Column {
             TopAppBar(
                 title = {
-                    if (esp.name.isBlank()) {
-                        Text(text = esp.ip)
-                    } else {
-                        Text(text = esp.name)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = esp.ip,
-                            style = MaterialTheme.typography.subtitle1
-                        )
+                    Row(
+                        modifier = Modifier.clickable(
+                            enabled = !refreshing,
+                            onClickLabel = "Rename controller",
+                            role = Role.Button
+                        ) { renaming = true }
+                    ) {
+                        if (espName.isBlank()) {
+                            Text(text = esp.ip)
+                        } else {
+                            Text(text = espName, modifier = Modifier.alignBy(FirstBaseline))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = esp.ip,
+                                style = MaterialTheme.typography.subtitle1,
+                                modifier = Modifier.alignBy(FirstBaseline)
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -215,6 +254,51 @@ fun ESPControlView(esp: ESPLEDS) {
 }
 
 @Composable
+fun RenameDialog(name: String, newName: (String) -> Unit, cancel: () -> Unit) {
+    var curName by remember { mutableStateOf(name) }
+
+    Column(
+        modifier = Modifier
+            .background(MaterialTheme.colors.background, MaterialTheme.shapes.medium)
+            .padding(16.dp)
+    ) {
+        Text(text = "Rename controller", style = MaterialTheme.typography.subtitle1)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = curName,
+            onValueChange = {
+                if (it.length <= ESPLEDS_MAX_NAME_LENGTH) {
+                    curName = it
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1F)
+            )
+
+            TextButton(onClick = cancel) {
+                Text(text = "Cancel")
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            TextButton(onClick = { newName(curName) }) {
+                Text(text = "Ok")
+            }
+        }
+    }
+}
+
+@Composable
 fun SectionHeader(title: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -234,5 +318,13 @@ fun SectionHeader(title: String) {
 fun DefaultPreview() {
     LEDController1Theme {
         ESPControlView(esp = ESPLEDS("192.168.1.6", "Name Here", Instant.now()))
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+fun RenameDialogPreview() {
+    LEDController1Theme {
+        RenameDialog(name = "Name Here", newName = {}, cancel = {})
     }
 }

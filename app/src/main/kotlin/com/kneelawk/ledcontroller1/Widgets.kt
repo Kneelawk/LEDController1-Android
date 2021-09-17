@@ -73,7 +73,8 @@ fun Spinner(
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(0.5F)
+                .fillMaxWidth()
+                .weight(0.5f)
         ) {
             SmallButton(
                 onClick = {
@@ -83,7 +84,9 @@ fun Spinner(
                 },
                 contentPadding = PaddingValues(0.dp),
                 shape = RectangleShape,
-                modifier = Modifier.fillMaxHeight(0.5F),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.5f),
                 enabled = enabled
             ) {
                 Text("+1")
@@ -96,7 +99,9 @@ fun Spinner(
                 },
                 contentPadding = PaddingValues(0.dp),
                 shape = RectangleShape,
-                modifier = Modifier.fillMaxHeight(),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.5f),
                 enabled = enabled
             ) {
                 Text("-1")
@@ -107,6 +112,7 @@ fun Spinner(
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth()
+                .weight(0.5f)
         ) {
             SmallButton(
                 onClick = {
@@ -116,7 +122,9 @@ fun Spinner(
                 },
                 contentPadding = PaddingValues(0.dp),
                 shape = RectangleShape,
-                modifier = Modifier.fillMaxHeight(0.5F),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.5f),
                 enabled = enabled
             ) {
                 Text("+10")
@@ -129,7 +137,9 @@ fun Spinner(
                 },
                 contentPadding = PaddingValues(0.dp),
                 shape = RectangleShape,
-                modifier = Modifier.fillMaxHeight(),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.5f),
                 enabled = enabled
             ) {
                 Text("-10")

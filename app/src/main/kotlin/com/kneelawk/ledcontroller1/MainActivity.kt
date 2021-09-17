@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -74,10 +75,12 @@ fun ESPView(esp: ESPLEDS) {
         context.startActivity(intent)
     }, modifier = Modifier.fillMaxWidth(), shape = RectangleShape) {
         Row(
-            modifier = Modifier.padding(all = 8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(all = 8.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (esp.name.isBlank()) {
+            if (esp.initialName.isBlank()) {
                 Text(
                     text = esp.ip,
                     color = MaterialTheme.colors.secondaryVariant,
@@ -85,14 +88,16 @@ fun ESPView(esp: ESPLEDS) {
                 )
             } else {
                 Text(
-                    text = esp.name,
+                    text = esp.initialName,
                     color = MaterialTheme.colors.secondaryVariant,
-                    style = MaterialTheme.typography.h6
+                    style = MaterialTheme.typography.h6,
+                    modifier = Modifier.alignBy(FirstBaseline)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = esp.ip,
-                    style = MaterialTheme.typography.body1
+                    style = MaterialTheme.typography.body1,
+                    modifier = Modifier.alignBy(FirstBaseline)
                 )
             }
         }

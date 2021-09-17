@@ -50,7 +50,7 @@ class ESPLEDSMonitor(scope: CoroutineScope) {
                         Log.w(TAG, "Unknown message received: '$message'")
                     }
                 } else {
-                    Log.w(TAG, "Unknown message received: '${String(data)}'")
+                    Log.w(TAG, "Unknown packet received: '${String(data)}'")
                 }
 
                 yield()
