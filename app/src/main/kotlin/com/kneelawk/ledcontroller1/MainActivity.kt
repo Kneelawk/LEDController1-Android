@@ -83,13 +83,13 @@ fun ESPView(esp: ESPLEDS) {
             if (esp.initialName.isBlank()) {
                 Text(
                     text = esp.ip,
-                    color = MaterialTheme.colors.secondaryVariant,
+                    color = MaterialTheme.colors.secondary,
                     style = MaterialTheme.typography.h6
                 )
             } else {
                 Text(
                     text = esp.initialName,
-                    color = MaterialTheme.colors.secondaryVariant,
+                    color = MaterialTheme.colors.secondary,
                     style = MaterialTheme.typography.h6,
                     modifier = Modifier.alignBy(FirstBaseline)
                 )

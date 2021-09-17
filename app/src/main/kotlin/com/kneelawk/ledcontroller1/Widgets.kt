@@ -41,7 +41,7 @@ fun Spinner(
     }
 
     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-        OutlinedTextField(
+        TextField(
             value = curText,
             onValueChange = {
                 // Changing curText causes a recompose but we don't want to recalculate curText
@@ -67,7 +67,8 @@ fun Spinner(
             shape = RectangleShape,
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(0.75F),
-            singleLine = true
+            singleLine = true,
+            colors = TextFieldDefaults.textFieldColors(focusedIndicatorColor = MaterialTheme.colors.secondary)
         )
 
         Column(
@@ -87,6 +88,7 @@ fun Spinner(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(0.5f),
+                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.secondary),
                 enabled = enabled
             ) {
                 Text("+1")
@@ -102,6 +104,7 @@ fun Spinner(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(0.5f),
+                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.secondary),
                 enabled = enabled
             ) {
                 Text("-1")
@@ -125,6 +128,7 @@ fun Spinner(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(0.5f),
+                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.secondary),
                 enabled = enabled
             ) {
                 Text("+10")
@@ -140,6 +144,7 @@ fun Spinner(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(0.5f),
+                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.secondary),
                 enabled = enabled
             ) {
                 Text("-10")

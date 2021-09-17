@@ -9,6 +9,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -192,12 +193,16 @@ fun ESPControlView(esp: ESPLEDS) {
                 },
                 valueRange = 0F..255F,
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp),
-                enabled = !refreshing
+                enabled = !refreshing,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colors.secondary,
+                    activeTrackColor = MaterialTheme.colors.secondaryVariant
+                )
             )
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colors.secondary,
+                color = MaterialTheme.colors.secondaryVariant,
                 elevation = 1.dp
             ) {
                 Text(
@@ -273,7 +278,12 @@ fun RenameDialog(name: String, newName: (String) -> Unit, cancel: () -> Unit) {
                     curName = it
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardActions = KeyboardActions { newName(curName) },
+            colors = TextFieldDefaults.textFieldColors(
+                focusedIndicatorColor = MaterialTheme.colors.secondary
+            )
         )
 
         Spacer(modifier = Modifier.height(8.dp))
