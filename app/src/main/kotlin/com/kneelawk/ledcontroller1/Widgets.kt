@@ -10,6 +10,7 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
@@ -68,7 +69,11 @@ fun Spinner(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(0.75F),
             singleLine = true,
-            colors = TextFieldDefaults.textFieldColors(focusedIndicatorColor = MaterialTheme.colors.secondary)
+            colors = TextFieldDefaults.textFieldColors(
+                focusedIndicatorColor = MaterialTheme.colors.secondary,
+                disabledIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
         )
 
         Column(
