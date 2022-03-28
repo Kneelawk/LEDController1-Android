@@ -32,13 +32,10 @@ class ESPLEDS(val ip: String, val initialName: String, val lastUpdate: Instant) 
     ): Result<T> {
         return withContext(Dispatchers.IO) {
             try {
-                Result.success(
-                    fromString(
-                        String(
-                            URL("http://$ip/$path").openStream().readBytes()
-                        ).trim()
-                    )
-                )
+                (URL("http://$ip/$path").openConnection() as? HttpURLConnection)?.run {
+                    connectTimeout = 1000
+                    Result.success(fromString(String(inputStream.readBytes()).trim()))
+                } ?: Result.failure(IOException("Unable to open connection"))
             } catch (e: IOException) {
                 Result.failure(e)
             } catch (e: NumberFormatException) {
@@ -56,6 +53,7 @@ class ESPLEDS(val ip: String, val initialName: String, val lastUpdate: Instant) 
         return withContext(Dispatchers.IO) {
             try {
                 (URL("http://$ip/$path").openConnection() as? HttpURLConnection)?.run {
+                    connectTimeout = 1000
                     requestMethod = "PUT"
                     doOutput = true
                     setRequestProperty("Content-Type", "text/plain")

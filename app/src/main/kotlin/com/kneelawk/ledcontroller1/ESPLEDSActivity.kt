@@ -21,8 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.kneelawk.ledcontroller1.ui.theme.LEDController1Theme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.time.Instant
 
 const val ESPLEDS_MESSAGE = "com.kneelawk.ledcontroller1.ESPLEDS_MESSAGE"
@@ -109,20 +108,31 @@ fun ESPControlView(esp: ESPLEDS) {
         }
     }
 
-    suspend fun refresh() {
+    suspend fun refresh() = coroutineScope {
         refreshing = true
-        espName = esp.getName()
-            .getOrDefaultElse("") { Log.w(ESPLEDSA_TAG, "Error getting name: $it") }
-        brightness = esp.getBrightness()
-            .getOrDefaultElse(0) { Log.w(ESPLEDSA_TAG, "Error getting brightness: $it") }
-        frameDuration = esp.getFrameDuration()
-            .getOrDefaultElse(5) { Log.w(ESPLEDSA_TAG, "Error getting frame duration: $it") }
-        huePerFrame = esp.getHuePerFrame()
-            .getOrDefaultElse(1) { Log.w(ESPLEDSA_TAG, "Error getting hue per frame: $it") }
-            .toByte().toInt()
-        huePerPixel = esp.getHuePerPixel()
-            .getOrDefaultElse(3) { Log.w(ESPLEDSA_TAG, "Error getting hue per pixel: $it") }
-            .toByte().toInt()
+        val nameJob = async {
+            espName = esp.getName()
+                .getOrDefaultElse("") { Log.w(ESPLEDSA_TAG, "Error getting name: $it") }
+        }
+        val brightnessJob = async {
+            brightness = esp.getBrightness()
+                .getOrDefaultElse(0) { Log.w(ESPLEDSA_TAG, "Error getting brightness: $it") }
+        }
+        val frameDurationJob = async {
+            frameDuration = esp.getFrameDuration()
+                .getOrDefaultElse(5) { Log.w(ESPLEDSA_TAG, "Error getting frame duration: $it") }
+        }
+        val huePerFrameJob = async {
+            huePerFrame = esp.getHuePerFrame()
+                .getOrDefaultElse(1) { Log.w(ESPLEDSA_TAG, "Error getting hue per frame: $it") }
+                .toByte().toInt()
+        }
+        val huePerPixelJob = async {
+            huePerPixel = esp.getHuePerPixel()
+                .getOrDefaultElse(3) { Log.w(ESPLEDSA_TAG, "Error getting hue per pixel: $it") }
+                .toByte().toInt()
+        }
+        listOf(nameJob, brightnessJob, frameDurationJob, huePerFrameJob, huePerPixelJob).awaitAll()
         refreshing = false
     }
 
